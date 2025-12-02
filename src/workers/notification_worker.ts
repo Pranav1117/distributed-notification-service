@@ -12,10 +12,8 @@ const connection = new IORedis({
 const worker = new Worker(
   "notification",
   async (job) => {
-    console.log(job.name);
-    console.log(job.id);
-    console.log(job.data);
-    await sendEmail();
+    const { data } = await job.data;
+    await sendEmail(data);
   },
   { connection }
 );

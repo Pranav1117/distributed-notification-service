@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { prisma } from "../../db/dbClient";
 import { Queue } from "bullmq";
+import { prisma } from "../../db/dbClient";
+import { calculatePriceDropped } from "@/utils/utils";
 
 const producer = new Queue("notification");
 
@@ -64,10 +65,19 @@ export const update_product_price = async (req: Request, res: Response) => {
       if (!updatedProduct)
         return res.status(500).json({ message: "Failed to update price" });
 
+      const droppedPricePercentage = calculatePriceDropped(
+        product.priceCents,
+        price
+      );
+
+      const data = {
+        droppedPricePercentage,
+        productName: product.name,
+        toEmail: "pranavbavaskar2@gmail.com",
+      };
+
       // add producer here
-      await producer.add("email_notification", {
-        data: { messsage: `price droped from ${existingPrice} to ${price}` },
-      });
+      await producer.add("email_notification", { data });
 
       return res.status(200).json({ message: "Price updated successfully" });
     }
